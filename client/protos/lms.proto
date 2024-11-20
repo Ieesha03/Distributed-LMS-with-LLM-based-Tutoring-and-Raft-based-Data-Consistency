@@ -1,0 +1,154 @@
+syntax = "proto3";
+
+package lms;
+
+service LMS {
+    rpc register(RegisterRequest) returns (StatusResponse);
+    rpc login(LoginRequest) returns (LoginResponse);
+    rpc logout(LogoutRequest) returns (StatusResponse);
+    rpc post(PostRequest) returns (StatusResponse);
+    rpc get(GetRequest) returns (GetResponse);
+    rpc askQuestion(QuestionRequest) returns (AnswerResponse);
+    rpc gradeStudent(GradeRequest) returns (StatusResponse);  // New RPC for grading students
+    rpc giveFeedback(FeedbackRequest) returns (StatusResponse); // New RPC for giving feedback
+
+    rpc requestVote(RequestVoteMessage) returns (RequestVoteReply);
+    rpc appendEntries(AppendEntriesMessage) returns (AppendEntriesReply);
+    rpc leaderSteppingDown(LeaderStepDownMessage) returns (StatusResponse);
+    rpc get_logs(LogRequest) returns (LogResponse);
+    rpc index(IndexRequest) returns (IndexResponse); // New RPC for the index method
+}
+
+message IndexRequest {
+    string token = 1;       // Token for authentication
+    string query = 2;       // Query or request details
+}
+
+message IndexResponse {
+    string status = 1;      // Status of the operation
+    string message = 2;     // Any additional information
+}
+
+
+message RegisterRequest {
+    string username = 1;
+    string password = 2;
+    string role = 3; // 'student' or 'instructor'
+}
+
+message LoginRequest {
+    string username = 1;
+    string password = 2;
+}
+
+message LoginResponse {
+    string status = 1;
+    string token = 2;
+}
+
+message LogoutRequest {
+    string token = 1;
+}
+
+message StatusResponse {
+    string status = 1;
+}
+
+message PostRequest {
+    string token = 1;
+    string type = 2; // 'assignment' or 'course_material'
+    bytes data = 3;  // PDF data
+}
+
+message GetRequest {
+    string token = 1;
+    string type = 2; // 'course_material', 'assignment', or 'grades'
+}
+
+message GetResponse {
+    string status = 1;
+    repeated DataItem items = 2; // List of items retrieved
+}
+
+message DataItem {
+    string id = 1;  // Student or Instructor ID
+    bytes data = 2;  // Actual data (PDF content or grade data)
+}
+
+message QuestionRequest {
+    string token = 1;
+    string question = 2;
+}
+
+message AnswerResponse {
+    string status = 1;
+    string answer = 2; // Simulated LLM answer
+}
+
+message GradeRequest {
+    string token = 1;
+    string student_id = 2;  // Student to be graded
+    string grade = 3;       // Grade to assign
+}
+
+// New message type for feedback
+message FeedbackRequest {
+    string token = 1;          // Instructor's token
+    string student_id = 2;     // Student ID to whom the feedback is directed
+    string feedback = 3;       // Feedback message
+}
+// --- Raft Consensus ---
+message AppendEntriesMessage {
+    string from_node = 1;
+    string to = 2;
+    int32 term = 3;
+    int32 prevIndex = 4;
+    int32 prevTerm = 5;
+    int32 commitIndex = 6;
+    repeated LogEntry entries = 7;
+}
+
+message AppendEntriesReply {
+    string from_node = 1;
+    string to = 2;
+    int32 term = 3;
+    bool entryAppended = 4;
+    int32 matchIndex = 5;
+}
+
+
+message RequestVoteMessage {
+    string from_node = 1;
+    int32 term = 2;
+    int32 lastLogIndex = 3;
+    int32 lastLogTerm = 4;
+}
+
+message RequestVoteReply {
+     string from_node = 1;
+    string to = 2;
+    int32 term = 3;
+    bool voteGranted = 4;
+}
+
+message LeaderStepDownMessage {
+    string from_node = 1;  // The address of the node stepping down
+    int32 term = 2;        // The current term when the leader steps down
+}
+
+// In lms.proto
+message LogRequest {
+    string token = 1;
+}
+
+message LogEntry {
+    string command = 1;
+    int32 term = 2;
+    int32 index = 3;
+}
+
+message LogResponse {
+    string status = 1;
+    repeated LogEntry logs = 2;
+}
+
